@@ -1,4 +1,6 @@
-const fs = require('fs')
+const fs = require('fs');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync')
 
 
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8', (err, data) => {
@@ -6,14 +8,14 @@ const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-si
     return data
 }));
 
-exports.checkID = (req, res, next, val) => {
-    const { id } = req.params;
+// exports.checkID = (req, res, next, val) => {
+//     const { id } = req.params;
 
-    if(!tours[id]) {
-      return res.status(404).json({ status: "failed", message: "Invalid ID!" })
-    };
-    next();
-}
+//     if(!tours[id]) {
+//       return res.status(404).json({ status: "failed", message: "Invalid ID!" })
+//     };
+//     next();
+// }
 
 exports.checkBody = (req, res, next) => {
     if(!req.body.name || !req.body.price) {
@@ -31,19 +33,20 @@ exports.getAllTours = (req, res) => {
     });
 }
 
-exports.getTour = (req, res) => {
+exports.getTour = catchAsync(async (req, res, next) => {
     const { id } = req.params;
+        console.log("deneme:>>", id)
+
+    if(!tours[id]) {
+        console.log("aaaaaaaaaa")
+       return next(new AppError('No tour found', 404))
+    };
+
     res.status(200).json({ status: 'success', data: { tours: tours[id] } })
-}
+});
 
-const catchAsync = fn => {
-    return (req, res, next) => {
-        fn(req, res, next).catch(next);
-    }
-}
-
-exports.createTour = async (req, res) => {
-    try {
+exports.createTour = catchAsync(async (req, res, next) => {
+   
         const newId = tours[tours.length - 1].id + 1;
         const newTour = Object.assign({ id: newId }, req.body);
         tours.push(newTour);
@@ -57,14 +60,7 @@ exports.createTour = async (req, res) => {
                 }
             })
         })
-    } catch (err) {
-        res.status(400).json({
-            status: "failed",
-            message: err
-        })
-    }
-    
-}
+});
 
 exports.updateTour = (req, res) => {
     res.status(200).json({ status: 'success', data: { tour: '<Updated tour here...>' } })
