@@ -2,6 +2,7 @@ const Tour = require('./../models/tourModel')
 // const fs = require('fs');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync')
+const APIFeatures = require('../utils/apiFeatures');
 
 
 // const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`, 'utf-8', (err, data) => {
@@ -25,47 +26,34 @@ const catchAsync = require('../utils/catchAsync')
 //     next();
 // }
 
+exports.aliasTopTours = (req, res, next) => {
+    req.query.limit = '5';
+    req.query.sort = '-ratingsAverage,price';
+    req.query.fields = 'name, price, ratingsAverage, summary, difficulty';
+    next();
+};
+
 exports.getAllTours = catchAsync(async (req, res, next) => {
     // const { duration, difficulty } = req.query;
 
-    // build query
-    // 1. Filtering
-    const queryObj = { ...req.query };
-    console.log("obj:>>", queryObj)
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach(el => delete queryObj[el])
-
-    // 2. Advanced Filtering
-    let queryStr = JSON.stringify(queryObj)
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`)
-    console.log("str:>>", JSON.parse(queryStr))
-
-    let query = Tour.find(JSON.parse(queryStr));
-    // console.log("4-----", query)
-    // const query = await Tour.find()
-    // .where('duration')
-    // .equals(duration)
-    // .where('difficulty')
-    // .equals(difficulty)
-
-    // 3. Sorting
-    if(req.query.sort) {
-        query = query.sort(req.query.sort)
-        console.log("qqqq:>>", query)
-    }
-
     // execute query
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(), req.query)
+        .filter()
+        .sort()
+        .limitField()
+        .paginate();
+
+    const tours = await features.query;
     // send response
-    res.status(200).json({ 
-        status: 'success', 
-        results: tours.length, 
-        data: { tours } 
+    res.status(200).json({
+        status: 'success',
+        results: tours.length,
+        data: { tours }
     });
-})
+});
 
 exports.getTour = catchAsync(async (req, res, next) => {
-        // console.log("deneme:>>", id)
+    // console.log("deneme:>>", id)
 
     // if(!tours[id]) {
     //     console.log("aaaaaaaaaa")
@@ -79,19 +67,19 @@ exports.getTour = catchAsync(async (req, res, next) => {
 });
 
 exports.createTour = catchAsync(async (req, res, next) => {
-   
-    const newTour = await Tour.create(req.body) 
-        // const newId = tours[tours.length - 1].id + 1;
-        // const newTour = Object.assign({ id: newId }, req.body);
-        // tours.push(newTour);
-        // console.log(newTour)
 
-        // fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`,JSON.stringify(tours), err => {
-            res.status(201).json({
-                status: 'success',
-                data: { tours: newTour } 
-            })
-        // })
+    const newTour = await Tour.create(req.body)
+    // const newId = tours[tours.length - 1].id + 1;
+    // const newTour = Object.assign({ id: newId }, req.body);
+    // tours.push(newTour);
+    // console.log(newTour)
+
+    // fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`,JSON.stringify(tours), err => {
+    res.status(201).json({
+        status: 'success',
+        data: { tours: newTour }
+    })
+    // })
 });
 
 exports.updateTour = catchAsync(async (req, res, next) => {
@@ -100,9 +88,9 @@ exports.updateTour = catchAsync(async (req, res, next) => {
         new: true,
         runValidators: true
     });
-    res.status(200).json({ 
-        status: 'success', 
-        data: { tour } 
+    res.status(200).json({
+        status: 'success',
+        data: { tour }
     })
 });
 
@@ -110,4 +98,15 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
     const { id } = req.params;
     await Tour.findByIdAndDelete(id)
     res.status(204).json({ status: 'success', data: null })
-})
+});
+
+exports.getTourStats = async (req, res) => {
+    try {
+
+    } catch (err) {
+        res.status(404).json({
+            status: 'fail',
+            message: err
+        });
+    };
+}
