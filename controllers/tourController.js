@@ -63,6 +63,10 @@ exports.getTour = catchAsync(async (req, res, next) => {
     const { id } = req.params;
     const tour = await Tour.findById(id);
 
+    if (!tour) {
+        return next(new AppError('No Tour found with that ID', 404))
+    };
+
     res.status(200).json({ status: 'success', data: { tour } })
 });
 
@@ -100,13 +104,13 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
     res.status(204).json({ status: 'success', data: null })
 });
 
-exports.getTourStats = async (req, res) => {
-    try {
+// exports.getTourStats = async (req, res) => {
+//     try {
 
-    } catch (err) {
-        res.status(404).json({
-            status: 'fail',
-            message: err
-        });
-    };
-}
+//     } catch (err) {
+//         res.status(404).json({
+//             status: 'fail',
+//             message: err
+//         });
+//     };
+// }

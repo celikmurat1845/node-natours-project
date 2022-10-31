@@ -10,7 +10,7 @@ const app = express();
 
 // middleware's
 console.log(process.env.NODE_ENV)
-if(process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
 app.use(express.json());
@@ -30,7 +30,7 @@ app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
 // error handling
-app.all('*', (req, res, next) => {
+app.all('*', (err, req, res, next) => {
     // res.status(404).json({
     //  status: 'failed', 
     //  message: `Can not find ${req.originalUrl} route!!!` 
